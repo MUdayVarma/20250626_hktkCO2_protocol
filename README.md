@@ -1,5 +1,5 @@
 
-# 20250606_hktkCO2_Hyperion
+# 20250606_hktkCO2_Hyperion_Chainlink
 
 Thi project is to demonstrate how Tokenizing carbon credits is an impactful application of blockchain in climate tech. This project contains smart contract with an intent to deploy on Polkadot chain, to leverage the features of Polkadot AssetHub and PolkaVM effectively and to deploy on Polkadot testnet (i.e. Westend). 
 
@@ -33,12 +33,3 @@ Key features include:​
 The platform can leverage Ethereum (for DeFi liquidity), Hyperion (for interoperability and scalability), and IPFS or Chainlink oracles for verifiable data integration (e.g., satellite imagery or project audit results). Off-chain registries are bridged on-chain via a proof-based retirement mechanism, ensuring integrity at every step.​
 
 Users — from individuals to corporations — can offset emissions transparently, trade credits, or support verified green projects. Small contributors can access fractionalized tokens, while enterprises gain regulatory-grade audit trails for sustainability reporting.​
-
-# Community Engagement Features
-Users can begin by connecting their crypto wallet, completing an optional KYC process, and taking an onboarding quiz designed to educate them on carbon markets and tokenized offsets. As they explore tokenized green projects, vote on future initiatives, or retire carbon credits to claim digital proof of impact, they earn points for each action. Tasks such as staking tokens, inviting friends through referral links, and sharing retirement certificates on social media further enhance engagement and virality.
-
-# Getting Involved
-HBCO2 welcomes passionate contributors to co-create a transparent, blockchain-based carbon credit ecosystem. Whether you're a developer, climate advocate, or curious learner, there are multiple ways to get involved.​
-
-Developers can contribute to smart contracts, UI/UX, or integrations via our open-source GitHub. Early adopters can join the beta program to test features like offsetting, governance voting, and gamified dashboards — with feedback directly shaping the product. Community members can become ambassadors, spread the mission, and earn rewards by sharing content or referrals. Project owners can submit verified climate projects to be tokenized on-chain.
-
