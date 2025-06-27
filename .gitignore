@@ -13,7 +13,7 @@ docs/
 
 # Dotenv file
 .env
-.gitignore 
+
 
 node_modules/
 

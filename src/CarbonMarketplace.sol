@@ -188,4 +188,15 @@ contract CarbonMarketplace is ReentrancyGuard, Ownable {
     function withdrawFees() external onlyOwner {
         payable(owner()).transfer(address(this).balance);
     }
+
+    // Add to CarbonMarketplace.sol
+function createFractionalListing(
+    uint256 amount,
+    uint256 pricePerToken,
+    uint256 minPurchase,
+    uint256 maxPurchase
+) external {
+    // Implementation for fractional trading
+}
+
 }
