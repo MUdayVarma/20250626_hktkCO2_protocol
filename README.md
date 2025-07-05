@@ -1,5 +1,16 @@
 ##20250606_hktkCO2_protocol (L2[Hyperion || zkSync || Sepolia]_Chainlink)
 
+
+[
+Contract Addresses (deployed on Sepolia on 28Jun2025):
+     CarbonOracle:       0x8f8FF9421596927Ba53986Be4D82bb202e45Eb5c
+     CarbonCreditToken:  0xC496538fbD387Ccf5014C4091908fA0a131f3fd7
+     CarbonRegistry:     0x325789e3cCB2e0229BEfb18Ddc3894eF546b8F41
+     CarbonMarketplace:  SKIPPED
+     RetirementContract: 0x24428d459B9BeA1a5697A3d5AbA1B07a84DC5C67
+     CarbonPriceOracle:  0x56190F36a337b58EB716483b86d7B33Fd4e55F11
+]
+
 Thi project is to demonstrate how Tokenizing carbon credits is an impactful application of blockchain in climate tech. This project contains smart contract with an intent to deploy on Polkadot chain, to leverage the features of Polkadot AssetHub and PolkaVM effectively and to deploy on Polkadot testnet (i.e. Westend).
 
 This project demonstrates a basic Hardhat use case with a sample contract, a test for that contract, and a Hardhat Ignition module that deploys that contract.

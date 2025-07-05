@@ -1,0 +1,44 @@
+
+src/
+├── components/
+│   ├── Dashboard/
+│   │   ├── //Dashboard.tsx
+│   │   ├── //PortfolioOverview.tsx
+│   │   ├── //CarbonProjects.tsx
+│   │   └── //PriceHistory.tsx
+│   ├── Marketplace/
+│   │   ├── //Marketplace.tsx
+│   │   ├── //ListingCard.tsx
+│   │   └── //CreateListing.tsx
+│   ├── Retirement/
+│   │   ├── //RetireCredits.tsx
+│   │   └── //RetirementHistory.tsx
+│   ├── ESGReporting/
+│   │   ├── //ESGReport.tsx
+│   │   └── //ImpactSummary.tsx
+│   ├── Layout/
+│   │   ├── //Header.tsx
+│   │   ├── //Navigation.tsx
+│   │   └── //Footer.tsx
+│   └── Common/
+│       ├── //ConnectWallet.tsx
+│       ├── //LoadingSpinner.tsx
+│       └── //TransactionModal.tsx
+├── contracts/
+│   ├── //addresses.ts
+│   ├── abis/
+│   │   ├── CarbonCreditToken.json
+│   │   ├── CarbonMarketplace.json
+│   │   ├── CarbonRegistry.json
+│   │   └── RetirementContract.json
+│   └── hooks/
+│       ├── //useContract.ts
+│       ├── //useMarketplace.ts
+│       └── //useRetirement.ts
+├── utils/
+│   ├── //constants.ts
+│   ├── //formatters.ts
+│   └── //chainConfig.ts
+├── //App.tsx
+├── index.tsx
+└── //index.css

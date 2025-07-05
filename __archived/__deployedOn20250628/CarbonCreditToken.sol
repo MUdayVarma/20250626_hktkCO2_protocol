@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
-import "./OracleChainlinkFunction.sol";
+import "./OracleIntegration.sol";
 
 contract CarbonCreditToken is ERC20, AccessControl, Pausable {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
@@ -12,7 +12,7 @@ contract CarbonCreditToken is ERC20, AccessControl, Pausable {
     bytes32 public constant ORACLE_ROLE = keccak256("ORACLE_ROLE");
     
     // Oracle integration
-    ChainlinkOracle public carbonOracle;
+    CarbonOracle public carbonOracle;
     
     struct CreditMetadata {
         string projectId;
@@ -53,7 +53,7 @@ contract CarbonCreditToken is ERC20, AccessControl, Pausable {
         _grantRole(MINTER_ROLE, msg.sender);
         _grantRole(BURNER_ROLE, msg.sender);
         _grantRole(ORACLE_ROLE, msg.sender);
-        carbonOracle = ChainlinkOracle(_carbonOracle);
+        carbonOracle = CarbonOracle(_carbonOracle);
     }
     
     /**
@@ -71,6 +71,7 @@ contract CarbonCreditToken is ERC20, AccessControl, Pausable {
         string memory apiUrl
     ) external onlyRole(MINTER_ROLE) whenNotPaused returns (uint256 creditId, bytes32 requestId) {
         require(amount > 0, "Amount must be greater than 0");
+        require(carbonOracle.isProjectAuthorized(projectId), "Project not authorized for oracle verification");
         
         creditId = nextCreditId++;
         
@@ -93,7 +94,7 @@ contract CarbonCreditToken is ERC20, AccessControl, Pausable {
         projectCredits[projectId].push(creditId);
         
         // Request oracle verification
-        requestId = carbonOracle.requestMRVData(projectId, registry);
+        requestId = carbonOracle.requestProjectVerification(projectId, apiUrl);
         creditMetadata[creditId].oracleRequestId = requestId;
         requestIdToCreditId[requestId] = creditId;
         
@@ -116,22 +117,24 @@ contract CarbonCreditToken is ERC20, AccessControl, Pausable {
         require(!credit.isOracleVerified, "Credit already verified and minted");
         
         // Check if project is verified by oracle
-        ChainlinkOracle.VerificationData memory verificationData = carbonOracle.getVerificationData(credit.projectId);
+        (bool isVerified, uint256 verifiedAmount, uint256 lastUpdate, string memory reportHash,) = 
+            carbonOracle.getVerificationStatus(credit.projectId);
         
-        require(verificationData.isVerified, "Project not verified by oracle");
-        require(verificationData.creditAmount >= amount, "Requested amount exceeds verified amount");
+        require(isVerified, "Project not verified by oracle");
+        require(verifiedAmount >= amount, "Requested amount exceeds verified amount");
         
         // Update credit metadata
         credit.isOracleVerified = true;
-        credit.lastVerificationTime = verificationData.timestamp;
-        credit.verifiedAmount = verificationData.creditAmount;
+        credit.lastVerificationTime = lastUpdate;
+        credit.verifiedAmount = verifiedAmount;
+        credit.reportHash = reportHash;
         
         // Mint the tokens
         _mint(to, amount * 1e18);
         totalCreditsIssued += amount;
         
         emit CreditMinted(to, creditId, amount, credit.projectId);
-        emit CreditVerified(creditId, true, verificationData.creditAmount);
+        emit CreditVerified(creditId, true, verifiedAmount);
     }
     
     /**
@@ -150,9 +153,10 @@ contract CarbonCreditToken is ERC20, AccessControl, Pausable {
         require(credit.isOracleVerified, "Credit not verified");
         
         // Check if verification is still current
-        ChainlinkOracle.VerificationData memory verificationData = carbonOracle.getVerificationData(credit.projectId);
-        bool isCurrentlyVerified = verificationData.isVerified && 
-            (block.timestamp - verificationData.timestamp) <= verificationTimeLimit;
+        bool isCurrentlyVerified = carbonOracle.isVerificationCurrent(
+            credit.projectId, 
+            verificationTimeLimit
+        );
         
         if (!isCurrentlyVerified) {
             emit VerificationExpired(creditId, credit.projectId);
@@ -201,9 +205,10 @@ contract CarbonCreditToken is ERC20, AccessControl, Pausable {
             return (false, "Credit already retired");
         }
         
-        ChainlinkOracle.VerificationData memory verificationData = carbonOracle.getVerificationData(credit.projectId);
-        bool isCurrentlyVerified = verificationData.isVerified && 
-            (block.timestamp - verificationData.timestamp) <= verificationTimeLimit;
+        bool isCurrentlyVerified = carbonOracle.isVerificationCurrent(
+            credit.projectId, 
+            verificationTimeLimit
+        );
         
         if (!isCurrentlyVerified) {
             return (false, "Verification expired");
@@ -217,7 +222,7 @@ contract CarbonCreditToken is ERC20, AccessControl, Pausable {
      */
     function refreshVerification(
         uint256 creditId,
-        string memory registry
+        string memory apiUrl
     ) external onlyRole(MINTER_ROLE) returns (bytes32 requestId) {
         require(creditId < nextCreditId, "Credit does not exist");
         
@@ -225,7 +230,7 @@ contract CarbonCreditToken is ERC20, AccessControl, Pausable {
         require(credit.isOracleVerified, "Credit was never verified initially");
         
         // Request new verification
-        requestId = carbonOracle.requestMRVData(credit.projectId, registry);
+        requestId = carbonOracle.requestProjectVerification(credit.projectId, apiUrl);
         credit.oracleRequestId = requestId;
         requestIdToCreditId[requestId] = creditId;
         
@@ -254,11 +259,9 @@ contract CarbonCreditToken is ERC20, AccessControl, Pausable {
         
         CreditMetadata memory credit = creditMetadata[creditId];
         
-        ChainlinkOracle.VerificationData memory verificationData = carbonOracle.getVerificationData(credit.projectId);
         bool isValid = credit.isOracleVerified && 
                       !credit.isRetired && 
-                      verificationData.isVerified &&
-                      (block.timestamp - verificationData.timestamp) <= verificationTimeLimit;
+                      carbonOracle.isVerificationCurrent(credit.projectId, verificationTimeLimit);
         
         return (
             credit.projectId,
@@ -302,7 +305,7 @@ contract CarbonCreditToken is ERC20, AccessControl, Pausable {
      * @dev Update oracle contract address
      */
     function updateOracleContract(address _newOracle) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        carbonOracle = ChainlinkOracle(_newOracle);
+        carbonOracle = CarbonOracle(_newOracle);
     }
     
     /**
@@ -330,14 +333,17 @@ contract CarbonCreditToken is ERC20, AccessControl, Pausable {
      * @dev Get project verification summary
      */
     function getProjectVerificationSummary(string memory projectId) external view returns (
+        bool isAuthorized,
         bool isVerified,
         uint256 totalCredits,
         uint256 lastVerificationTime
     ) {
-        ChainlinkOracle.VerificationData memory verificationData = carbonOracle.getVerificationData(projectId);
+        isAuthorized = carbonOracle.isProjectAuthorized(projectId);
+        
+        (isVerified,,lastVerificationTime,,) = carbonOracle.getVerificationStatus(projectId);
         
         totalCredits = projectCredits[projectId].length;
         
-        return (verificationData.isVerified, totalCredits, verificationData.timestamp);
+        return (isAuthorized, isVerified, totalCredits, lastVerificationTime);
     }
 }
